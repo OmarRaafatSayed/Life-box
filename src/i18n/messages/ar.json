@@ -1,0 +1,128 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "shop": "المتجر",
+    "cart": "السلة",
+    "wishlist": "المفضلة",
+    "search": "بحث"
+  },
+  "home": {
+    "hero": {
+      "title": "حوّل منزلك مع لايف بوكس",
+      "subtitle": "منتجات منزلية عالية الجودة لكل غرفة وكل ذوق",
+      "cta": "تسوق الآن"
+    },
+    "featured": "منتجات مميزة",
+    "categories": "تسوق حسب الفئة",
+    "promo": {
+      "title": "عرض خاص",
+      "subtitle": "شحن مجاني على الطلبات التي تتجاوز 200 ريال",
+      "cta": "تسوق التخفيضات"
+    }
+  },
+  "product": {
+    "addToCart": "أضف إلى السلة",
+    "saveToWishlist": "احفظ في المفضلة",
+    "removeFromWishlist": "إزالة من المفضلة",
+    "moveToCart": "نقل إلى السلة",
+    "inStock": "متوفر",
+    "outOfStock": "غير متوفر",
+    "quantity": "الكمية",
+    "relatedProducts": "قد يعجبك أيضاً",
+    "sku": "رمز المنتج",
+    "rating": "التقييم",
+    "reviews": "تقييمات",
+    "quickAdd": "إضافة سريعة"
+  },
+  "cart": {
+    "title": "سلة التسوق",
+    "empty": "سلتك فارغة",
+    "emptyCta": "متابعة التسوق",
+    "subtotal": "المجموع الفرعي",
+    "shipping": "الشحن المتوقع",
+    "total": "الإجمالي",
+    "checkout": "إتمام الشراء",
+    "remove": "حذف",
+    "clear": "إفراغ السلة"
+  },
+  "wishlist": {
+    "title": "قائمة أمنياتي",
+    "empty": "قائمة أمنياتك فارغة",
+    "emptyCta": "اكتشف المنتجات"
+  },
+  "checkout": {
+    "title": "الدفع",
+    "delivery": "التوصيل",
+    "payment": "الدفع",
+    "review": "المراجعة",
+    "fullName": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "street": "عنوان الشارع",
+    "city": "المدينة",
+    "region": "المنطقة",
+    "postal": "الرمز البريدي",
+    "country": "الدولة",
+    "notes": "ملاحظات الطلب (اختياري)",
+    "nameOnCard": "الاسم على البطاقة",
+    "cardNumber": "رقم البطاقة",
+    "expiry": "تاريخ الانتهاء (MM/YY)",
+    "cvv": "رمز الأمان",
+    "placeOrder": "تأكيد الطلب",
+    "orderSummary": "ملخص الطلب",
+    "next": "التالي",
+    "back": "السابق"
+  },
+  "orderSuccess": {
+    "title": "تم الطلب!",
+    "subtitle": "شكراً لك على شرائك",
+    "orderNumber": "رقم الطلب",
+    "continueShopping": "متابعة التسوق"
+  },
+  "admin": {
+    "dashboard": "لوحة التحكم",
+    "products": "المنتجات",
+    "orders": "الطلبات",
+    "customers": "العملاء",
+    "totalOrders": "إجمالي الطلبات",
+    "totalRevenue": "إجمالي الإيرادات",
+    "totalProducts": "إجمالي المنتجات",
+    "totalCustomers": "إجمالي العملاء",
+    "addProduct": "إضافة منتج",
+    "editProduct": "تعديل المنتج",
+    "deleteProduct": "حذف المنتج",
+    "updateStatus": "تحديث الحالة",
+    "password": "كلمة المرور",
+    "login": "تسجيل الدخول"
+  },
+  "errors": {
+    "required": "هذا الحقل مطلوب",
+    "invalidEmail": "بريد إلكتروني غير صالح",
+    "invalidPhone": "رقم هاتف غير صالح",
+    "invalidCard": "رقم بطاقة غير صالح",
+    "invalidExpiry": "تاريخ انتهاء غير صالح (MM/YY)",
+    "invalidCvv": "رمز أمان غير صالح",
+    "notFound": "الصفحة غير موجودة",
+    "tryAgain": "حاول مرة أخرى"
+  },
+  "categories": {
+    "HOME_UTILITIES": "أدوات المنزل",
+    "HOUSEWARES": "أواني المنزل",
+    "HOME_TEXTILES": "المنسوجات المنزلية",
+    "DECORATIVE_ITEMS": "الديكورات"
+  },
+  "footer": {
+    "brand": "لايف بوكس",
+    "tagline": "منتجات منزلية عالية الجودة لكل غرفة وكل ذوق.",
+    "shop": "المتجر",
+    "help": "المساعدة",
+    "followUs": "تابعنا",
+    "contactUs": "تواصل معنا",
+    "faq": "الأسئلة الشائعة",
+    "returns": "سياسة الإرجاع",
+    "instagram": "إنستغرام",
+    "twitter": "تويتر / إكس",
+    "facebook": "فيسبوك",
+    "copyright": "© 2025 لايف بوكس. جميع الحقوق محفوظة."
+  }
+}

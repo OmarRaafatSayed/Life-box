@@ -1,0 +1,128 @@
+{
+  "nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "cart": "Cart",
+    "wishlist": "Wishlist",
+    "search": "Search"
+  },
+  "home": {
+    "hero": {
+      "title": "Transform Your Home with Life Box",
+      "subtitle": "Quality home products for every room and every taste",
+      "cta": "Shop Now"
+    },
+    "featured": "Featured Products",
+    "categories": "Shop by Category",
+    "promo": {
+      "title": "Special Offer",
+      "subtitle": "Free shipping on orders over 200 SAR",
+      "cta": "Shop the Sale"
+    }
+  },
+  "product": {
+    "addToCart": "Add to Cart",
+    "saveToWishlist": "Save to Wishlist",
+    "removeFromWishlist": "Remove from Wishlist",
+    "moveToCart": "Move to Cart",
+    "inStock": "In Stock",
+    "outOfStock": "Out of Stock",
+    "quantity": "Quantity",
+    "relatedProducts": "You May Also Like",
+    "sku": "SKU",
+    "rating": "Rating",
+    "reviews": "reviews",
+    "quickAdd": "Quick Add"
+  },
+  "cart": {
+    "title": "Shopping Cart",
+    "empty": "Your cart is empty",
+    "emptyCta": "Continue Shopping",
+    "subtotal": "Subtotal",
+    "shipping": "Estimated Shipping",
+    "total": "Total",
+    "checkout": "Proceed to Checkout",
+    "remove": "Remove",
+    "clear": "Clear Cart"
+  },
+  "wishlist": {
+    "title": "My Wishlist",
+    "empty": "Your wishlist is empty",
+    "emptyCta": "Discover Products"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "delivery": "Delivery",
+    "payment": "Payment",
+    "review": "Review",
+    "fullName": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "street": "Street Address",
+    "city": "City",
+    "region": "Region",
+    "postal": "Postal Code",
+    "country": "Country",
+    "notes": "Order Notes (Optional)",
+    "nameOnCard": "Name on Card",
+    "cardNumber": "Card Number",
+    "expiry": "Expiry (MM/YY)",
+    "cvv": "CVV",
+    "placeOrder": "Place Order",
+    "orderSummary": "Order Summary",
+    "next": "Next",
+    "back": "Back"
+  },
+  "orderSuccess": {
+    "title": "Order Placed!",
+    "subtitle": "Thank you for your purchase",
+    "orderNumber": "Order Number",
+    "continueShopping": "Continue Shopping"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "orders": "Orders",
+    "customers": "Customers",
+    "totalOrders": "Total Orders",
+    "totalRevenue": "Total Revenue",
+    "totalProducts": "Total Products",
+    "totalCustomers": "Total Customers",
+    "addProduct": "Add Product",
+    "editProduct": "Edit Product",
+    "deleteProduct": "Delete Product",
+    "updateStatus": "Update Status",
+    "password": "Password",
+    "login": "Login"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "invalidPhone": "Invalid phone number",
+    "invalidCard": "Invalid card number",
+    "invalidExpiry": "Invalid expiry date (MM/YY)",
+    "invalidCvv": "Invalid CVV",
+    "notFound": "Page not found",
+    "tryAgain": "Try Again"
+  },
+  "categories": {
+    "HOME_UTILITIES": "Home Utilities",
+    "HOUSEWARES": "Housewares",
+    "HOME_TEXTILES": "Home Textiles",
+    "DECORATIVE_ITEMS": "Decorative Items"
+  },
+  "footer": {
+    "brand": "Life Box",
+    "tagline": "Quality home products for every room and every taste.",
+    "shop": "Shop",
+    "help": "Help",
+    "followUs": "Follow Us",
+    "contactUs": "Contact Us",
+    "faq": "FAQ",
+    "returns": "Returns",
+    "instagram": "Instagram",
+    "twitter": "Twitter / X",
+    "facebook": "Facebook",
+    "copyright": "© 2025 Life Box. All rights reserved."
+  }
+}

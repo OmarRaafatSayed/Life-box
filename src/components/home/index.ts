@@ -1,0 +1,10 @@
+export { HeroSection } from "./HeroSection";
+export { CategoryShowcase } from "./CategoryShowcase";
+export { PromoBanner } from "./PromoBanner";
+export { FeaturedProducts } from "./FeaturedProducts";
+export { QuickCategories } from "./QuickCategories";
+export { TrustBar } from "./TrustBar";
+export { ShopByCategory } from "./ShopByCategory";
+export { BestSellers } from "./BestSellers";
+export { LifeBoxBundles } from "./LifeBoxBundles";
+export { FAQ } from "./FAQ";
