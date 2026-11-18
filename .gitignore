@@ -4,3 +4,5 @@ prisma/*.db
 prisma/*.db-journal
 .env
 node_modules
+
+.env.local

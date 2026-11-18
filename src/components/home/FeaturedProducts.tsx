@@ -1,15 +1,17 @@
 import Link from "next/link";
-import { FEATURED_PRODUCTS } from "@/lib/mockData";
-import FeaturedScroll from "./FeaturedScroll";
 import { Sparkles, ArrowRight } from "lucide-react";
+import { getFeaturedProducts } from "@/lib/data";
+import FeaturedScroll from "./FeaturedScroll";
 
-export function FeaturedProducts({ locale }: { locale: string }) {
+export async function FeaturedProducts({ locale }: { locale: string }) {
   const isAr = locale === "ar";
+  const products = await getFeaturedProducts(10);
+
+  if (products.length === 0) return null;
 
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-7xl mx-auto">
-
         <div className="flex items-end justify-between mb-10" dir={isAr ? "rtl" : "ltr"}>
           <div>
             <span
@@ -34,7 +36,7 @@ export function FeaturedProducts({ locale }: { locale: string }) {
           </Link>
         </div>
 
-        <FeaturedScroll products={FEATURED_PRODUCTS} locale={locale} />
+        <FeaturedScroll products={products} locale={locale} />
       </div>
     </section>
   );

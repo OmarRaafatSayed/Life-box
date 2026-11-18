@@ -56,7 +56,7 @@ export async function createOrder(
     const shipping = subtotal >= 200 ? 0 : 25
     const total = subtotal + shipping
 
-    const address: Order['address'] = {
+    const address = {
       street: formData.street,
       city: formData.city,
       region: formData.region,
@@ -70,7 +70,7 @@ export async function createOrder(
         fullName: formData.fullName,
         email: formData.email,
         phone: formData.phone,
-        address,
+        address: address as object,
         notes: formData.notes,
         subtotal,
         shipping,

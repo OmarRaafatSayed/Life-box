@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Store, Globe, DollarSign, Mail, Phone, MapPin } from "lucide-react";
+import { Save, Store, Globe, DollarSign, Mail } from "lucide-react";
 import { PageHeader, Card, Button, Input, Textarea, LoadingSpinner } from "@/components/admin/AdminComponents";
+import { createClient } from "@/utils/supabase/client";
 
-interface SiteSettings {
+type SiteSettings = {
   id: string;
   storeName: string;
   storeNameAr: string;
@@ -27,7 +28,20 @@ interface SiteSettings {
   instagramUrl?: string;
   twitterUrl?: string;
   whatsappNumber?: string;
-}
+};
+
+const DEFAULT_SETTINGS: SiteSettings = {
+  id: "site_settings",
+  storeName: "Life Box",
+  storeNameAr: "لايف بوكس",
+  primaryColor: "#3D1A6E",
+  secondaryColor: "#E91E8C",
+  currency: "EGP",
+  currencySymbol: "£",
+  taxRate: 0,
+  shippingFee: 50,
+  maintenanceMode: false,
+};
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
@@ -35,35 +49,27 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchSettings();
+    const supabase = createClient();
+    supabase
+      .from("SiteSettings")
+      .select("*")
+      .eq("id", "site_settings")
+      .single()
+      .then(({ data }) => {
+        setSettings(data ?? DEFAULT_SETTINGS);
+        setLoading(false);
+      });
   }, []);
-
-  async function fetchSettings() {
-    try {
-      const res = await fetch("/api/admin/settings");
-      const data = await res.json();
-      setSettings(data.settings);
-    } catch (error) {
-      console.error("Failed to fetch settings:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleSave() {
     if (!settings) return;
     setSaving(true);
-
     try {
-      await fetch("/api/admin/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
-      });
-      alert("Settings saved successfully!");
-    } catch (error) {
-      console.error("Failed to save settings:", error);
-      alert("Failed to save settings");
+      const supabase = createClient();
+      await supabase.from("SiteSettings").upsert({ ...settings, id: "site_settings" });
+      alert("تم حفظ الإعدادات بنجاح!");
+    } catch {
+      alert("فشل في حفظ الإعدادات");
     } finally {
       setSaving(false);
     }
@@ -74,14 +80,12 @@ export default function SettingsPage() {
   return (
     <div className="p-8">
       <PageHeader
-        title="Site Settings"
-        description="Configure your store's general settings and preferences"
+        title="إعدادات الموقع"
+        description="ضبط الإعدادات العامة وتفضيلات المتجر"
         action={
           <Button onClick={handleSave} disabled={saving}>
-            <div className="flex items-center gap-2">
-              <Save size={20} />
-              {saving ? "Saving..." : "Save Changes"}
-            </div>
+            <Save size={20} />
+            {saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}
           </Button>
         }
       />
@@ -90,232 +94,117 @@ export default function SettingsPage() {
         {/* Store Identity */}
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-purple-100 rounded-2xl">
-              <Store size={24} className="text-purple-600" />
+            <div className="p-3 rounded-2xl" style={{ background: "#F5F0FF" }}>
+              <Store size={24} style={{ color: "#3D1A6E" }} />
             </div>
-            <div>
-              <h2 className="text-xl font-black text-gray-900">Store Identity</h2>
-              <p className="text-sm text-gray-600">Basic information about your store</p>
+            <div className="text-right">
+              <h2 className="text-xl font-black text-gray-900">هوية المتجر</h2>
+              <p className="text-sm text-gray-600">المعلومات الأساسية لمتجرك</p>
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Store Name (English)"
-              value={settings.storeName}
-              onChange={(val) => setSettings({ ...settings, storeName: val })}
-              required
-            />
-            <Input
-              label="Store Name (Arabic)"
-              value={settings.storeNameAr}
-              onChange={(val) => setSettings({ ...settings, storeNameAr: val })}
-              required
-            />
-            <Input
-              label="Logo URL"
-              value={settings.logo || ""}
-              onChange={(val) => setSettings({ ...settings, logo: val })}
-            />
-            <Input
-              label="Favicon URL"
-              value={settings.favicon || ""}
-              onChange={(val) => setSettings({ ...settings, favicon: val })}
-            />
+            <Input label="اسم المتجر (عربي)" value={settings.storeNameAr} onChange={(v) => setSettings({ ...settings, storeNameAr: v })} required />
+            <Input label="اسم المتجر (إنجليزي)" value={settings.storeName} onChange={(v) => setSettings({ ...settings, storeName: v })} required />
+            <Input label="رابط الشعار" value={settings.logo ?? ""} onChange={(v) => setSettings({ ...settings, logo: v })} />
+            <Input label="رابط الأيقونة" value={settings.favicon ?? ""} onChange={(v) => setSettings({ ...settings, favicon: v })} />
           </div>
         </Card>
 
-        {/* Branding */}
+        {/* Brand Colors */}
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-pink-100 rounded-2xl">
-              <Globe size={24} className="text-pink-600" />
+            <div className="p-3 rounded-2xl" style={{ background: "#FCE4EC" }}>
+              <Globe size={24} style={{ color: "#E91E8C" }} />
             </div>
-            <div>
-              <h2 className="text-xl font-black text-gray-900">Brand Colors</h2>
-              <p className="text-sm text-gray-600">Customize your brand's color scheme</p>
+            <div className="text-right">
+              <h2 className="text-xl font-black text-gray-900">ألوان العلامة التجارية</h2>
+              <p className="text-sm text-gray-600">خصّص نظام الألوان</p>
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Primary Color</label>
-              <div className="flex gap-3">
-                <input
-                  type="color"
-                  value={settings.primaryColor}
-                  onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
-                  className="w-16 h-12 rounded-2xl border-2 border-gray-300"
-                />
-                <Input
-                  label=""
-                  value={settings.primaryColor}
-                  onChange={(val) => setSettings({ ...settings, primaryColor: val })}
-                  className="flex-1"
-                />
+            {[
+              { label: "اللون الرئيسي", key: "primaryColor" as const },
+              { label: "اللون الثانوي", key: "secondaryColor" as const },
+            ].map(({ label, key }) => (
+              <div key={key}>
+                <label className="block text-sm font-bold text-gray-700 mb-2 text-right">{label}</label>
+                <div className="flex gap-3">
+                  <Input label="" value={settings[key]} onChange={(v) => setSettings({ ...settings, [key]: v })} className="flex-1" />
+                  <input
+                    type="color"
+                    value={settings[key]}
+                    onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
+                    className="w-14 h-11 rounded-xl border-2 border-gray-300 cursor-pointer"
+                  />
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Secondary Color</label>
-              <div className="flex gap-3">
-                <input
-                  type="color"
-                  value={settings.secondaryColor}
-                  onChange={(e) => setSettings({ ...settings, secondaryColor: e.target.value })}
-                  className="w-16 h-12 rounded-2xl border-2 border-gray-300"
-                />
-                <Input
-                  label=""
-                  value={settings.secondaryColor}
-                  onChange={(val) => setSettings({ ...settings, secondaryColor: val })}
-                  className="flex-1"
-                />
-              </div>
-            </div>
+            ))}
           </div>
         </Card>
 
-        {/* Currency & Pricing */}
+        {/* Currency */}
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-green-100 rounded-2xl">
+            <div className="p-3 rounded-2xl bg-green-100">
               <DollarSign size={24} className="text-green-600" />
             </div>
-            <div>
-              <h2 className="text-xl font-black text-gray-900">Currency & Pricing</h2>
-              <p className="text-sm text-gray-600">Configure pricing and tax settings</p>
+            <div className="text-right">
+              <h2 className="text-xl font-black text-gray-900">العملة والأسعار</h2>
+              <p className="text-sm text-gray-600">ضبط إعدادات الأسعار والضرائب</p>
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Currency Code"
-              value={settings.currency}
-              onChange={(val) => setSettings({ ...settings, currency: val })}
-              placeholder="e.g., EGP, USD"
-              required
-            />
-            <Input
-              label="Currency Symbol"
-              value={settings.currencySymbol}
-              onChange={(val) => setSettings({ ...settings, currencySymbol: val })}
-              placeholder="e.g., £, $"
-              required
-            />
-            <Input
-              label="Tax Rate (%)"
-              type="number"
-              value={settings.taxRate.toString()}
-              onChange={(val) => setSettings({ ...settings, taxRate: parseFloat(val) || 0 })}
-            />
-            <Input
-              label="Shipping Fee"
-              type="number"
-              value={settings.shippingFee.toString()}
-              onChange={(val) => setSettings({ ...settings, shippingFee: parseFloat(val) || 0 })}
-            />
-            <Input
-              label="Free Shipping Minimum (Optional)"
-              type="number"
-              value={settings.freeShippingMin?.toString() || ""}
-              onChange={(val) => setSettings({ ...settings, freeShippingMin: val ? parseFloat(val) : undefined })}
-            />
+            <Input label="رمز العملة" value={settings.currency} onChange={(v) => setSettings({ ...settings, currency: v })} required />
+            <Input label="علامة العملة" value={settings.currencySymbol} onChange={(v) => setSettings({ ...settings, currencySymbol: v })} required />
+            <Input label="نسبة الضريبة (%)" type="number" value={String(settings.taxRate)} onChange={(v) => setSettings({ ...settings, taxRate: parseFloat(v) || 0 })} />
+            <Input label="رسوم الشحن" type="number" value={String(settings.shippingFee)} onChange={(v) => setSettings({ ...settings, shippingFee: parseFloat(v) || 0 })} />
+            <Input label="الحد الأدنى للشحن المجاني" type="number" value={String(settings.freeShippingMin ?? "")} onChange={(v) => setSettings({ ...settings, freeShippingMin: v ? parseFloat(v) : undefined })} />
           </div>
         </Card>
 
-        {/* Contact Information */}
+        {/* Contact */}
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-blue-100 rounded-2xl">
+            <div className="p-3 rounded-2xl bg-blue-100">
               <Mail size={24} className="text-blue-600" />
             </div>
-            <div>
-              <h2 className="text-xl font-black text-gray-900">Contact Information</h2>
-              <p className="text-sm text-gray-600">How customers can reach you</p>
+            <div className="text-right">
+              <h2 className="text-xl font-black text-gray-900">معلومات التواصل</h2>
+              <p className="text-sm text-gray-600">كيف يتواصل معك العملاء</p>
             </div>
           </div>
-
           <div className="space-y-4">
-            <Input
-              label="Contact Email"
-              type="email"
-              value={settings.contactEmail || ""}
-              onChange={(val) => setSettings({ ...settings, contactEmail: val })}
-            />
+            <Input label="البريد الإلكتروني" type="email" value={settings.contactEmail ?? ""} onChange={(v) => setSettings({ ...settings, contactEmail: v })} />
             <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Contact Phone"
-                type="tel"
-                value={settings.contactPhone || ""}
-                onChange={(val) => setSettings({ ...settings, contactPhone: val })}
-              />
-              <Input
-                label="WhatsApp Number"
-                type="tel"
-                value={settings.whatsappNumber || ""}
-                onChange={(val) => setSettings({ ...settings, whatsappNumber: val })}
-              />
+              <Input label="رقم الهاتف" type="tel" value={settings.contactPhone ?? ""} onChange={(v) => setSettings({ ...settings, contactPhone: v })} />
+              <Input label="رقم واتساب" type="tel" value={settings.whatsappNumber ?? ""} onChange={(v) => setSettings({ ...settings, whatsappNumber: v })} />
             </div>
-            <Textarea
-              label="Address"
-              value={settings.contactAddress || ""}
-              onChange={(val) => setSettings({ ...settings, contactAddress: val })}
-              rows={2}
-            />
+            <Textarea label="العنوان" value={settings.contactAddress ?? ""} onChange={(v) => setSettings({ ...settings, contactAddress: v })} rows={2} />
           </div>
         </Card>
 
-        {/* Social Media */}
+        {/* Social */}
         <Card className="p-6">
-          <h2 className="text-xl font-black text-gray-900 mb-4">Social Media Links</h2>
+          <h2 className="text-xl font-black text-gray-900 mb-4 text-right">روابط التواصل الاجتماعي</h2>
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Facebook URL"
-              type="url"
-              value={settings.facebookUrl || ""}
-              onChange={(val) => setSettings({ ...settings, facebookUrl: val })}
-            />
-            <Input
-              label="Instagram URL"
-              type="url"
-              value={settings.instagramUrl || ""}
-              onChange={(val) => setSettings({ ...settings, instagramUrl: val })}
-            />
-            <Input
-              label="Twitter URL"
-              type="url"
-              value={settings.twitterUrl || ""}
-              onChange={(val) => setSettings({ ...settings, twitterUrl: val })}
-            />
+            <Input label="رابط فيسبوك" type="url" value={settings.facebookUrl ?? ""} onChange={(v) => setSettings({ ...settings, facebookUrl: v })} />
+            <Input label="رابط إنستغرام" type="url" value={settings.instagramUrl ?? ""} onChange={(v) => setSettings({ ...settings, instagramUrl: v })} />
+            <Input label="رابط تويتر" type="url" value={settings.twitterUrl ?? ""} onChange={(v) => setSettings({ ...settings, twitterUrl: v })} />
           </div>
         </Card>
 
-        {/* About Section */}
+        {/* About */}
         <Card className="p-6">
-          <h2 className="text-xl font-black text-gray-900 mb-4">About Your Store</h2>
+          <h2 className="text-xl font-black text-gray-900 mb-4 text-right">عن المتجر</h2>
           <div className="grid grid-cols-2 gap-4">
-            <Textarea
-              label="About (English)"
-              value={settings.aboutEn || ""}
-              onChange={(val) => setSettings({ ...settings, aboutEn: val })}
-              rows={6}
-            />
-            <Textarea
-              label="About (Arabic)"
-              value={settings.aboutAr || ""}
-              onChange={(val) => setSettings({ ...settings, aboutAr: val })}
-              rows={6}
-            />
+            <Textarea label="عن المتجر (عربي)" value={settings.aboutAr ?? ""} onChange={(v) => setSettings({ ...settings, aboutAr: v })} rows={5} />
+            <Textarea label="عن المتجر (إنجليزي)" value={settings.aboutEn ?? ""} onChange={(v) => setSettings({ ...settings, aboutEn: v })} rows={5} />
           </div>
         </Card>
 
-        {/* Maintenance Mode */}
+        {/* Maintenance */}
         <Card className="p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-black text-gray-900 mb-1">Maintenance Mode</h2>
-              <p className="text-sm text-gray-600">Temporarily disable the website for maintenance</p>
-            </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
@@ -323,8 +212,12 @@ export default function SettingsPage() {
                 onChange={(e) => setSettings({ ...settings, maintenanceMode: e.target.checked })}
                 className="sr-only peer"
               />
-              <div className="w-14 h-8 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-purple-600"></div>
+              <div className="w-14 h-8 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-purple-700" />
             </label>
+            <div className="text-right">
+              <h2 className="text-xl font-black text-gray-900 mb-1">وضع الصيانة</h2>
+              <p className="text-sm text-gray-600">تعطيل الموقع مؤقتًا لأعمال الصيانة</p>
+            </div>
           </div>
         </Card>
       </div>

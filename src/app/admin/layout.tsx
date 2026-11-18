@@ -1,14 +1,14 @@
-import { cookies } from "next/headers";
+﻿import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import AdminSidebar from "./AdminSidebar";
+import AdminLayoutClient from "./AdminLayoutClient";
+import "../globals.css";
 
 async function loginAction(formData: FormData) {
   "use server";
   const pw = formData.get("password") as string;
   const expected = process.env.ADMIN_PASSWORD ?? "admin123";
   if (pw === expected) {
-    const { cookies: c } = await import("next/headers");
-    const cookieStore = await c();
+    const cookieStore = await cookies();
     cookieStore.set("admin_session", "1", {
       httpOnly: true,
       path: "/admin",
@@ -28,54 +28,58 @@ export default async function AdminLayout({
 
   if (!session) {
     return (
-      <html lang="en">
-        <body
-          className="min-h-screen flex items-center justify-center"
-          style={{ background: "linear-gradient(135deg, #1a0a3c 0%, #3D1A6E 50%, #E91E8C 100%)" }}
-        >
-          <div
-            className="w-full max-w-sm rounded-3xl p-8 shadow-2xl"
-            style={{ background: "white" }}
-          >
-            {/* Logo */}
-            <div className="flex items-center gap-2 mb-8 justify-center">
-              <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg"
-                style={{ background: "linear-gradient(135deg, #3D1A6E, #E91E8C)" }}
-              >
-                LB
+      <html lang="ar" dir="rtl">
+        <body className="min-h-screen flex items-center justify-center" style={{ background: "#3D1A6E" }}>
+          <div className="w-full max-w-md mx-4">
+            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+              {/* Header */}
+              <div className="px-8 py-6 text-center" style={{ background: "#3D1A6E" }}>
+                <div
+                  className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.15)" }}
+                >
+                  <span className="text-3xl font-black text-white">LB</span>
+                </div>
+                <h1 className="text-2xl font-black text-white mb-1">لايف بوكس</h1>
+                <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>
+                  لوحة التحكم
+                </p>
               </div>
-              <span className="text-2xl font-black" style={{ color: "#3D1A6E" }}>
-                Life Box
-              </span>
+
+              {/* Login Form */}
+              <form action={loginAction} className="p-8">
+                <div className="mb-6">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    كلمة المرور
+                  </label>
+                  <input
+                    name="password"
+                    type="password"
+                    placeholder="أدخل كلمة المرور"
+                    required
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none text-gray-700 transition-colors text-right"
+                    style={{ direction: "rtl" }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3.5 rounded-2xl text-white font-bold text-sm transition-all hover:opacity-90"
+                  style={{ background: "#3D1A6E" }}
+                >
+                  تسجيل الدخول
+                </button>
+
+                <p className="text-center text-xs text-gray-500 mt-6">
+                  كلمة المرور الافتراضية:{" "}
+                  <code className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-mono">admin123</code>
+                </p>
+              </form>
             </div>
-            <h1 className="text-xl font-black text-center mb-6" style={{ color: "#1a0a3c" }}>
-              Admin Dashboard
-            </h1>
-            <form action={loginAction} className="flex flex-col gap-4">
-              <div>
-                <label className="text-sm font-bold text-gray-700 block mb-1.5">
-                  Password
-                </label>
-                <input
-                  name="password"
-                  type="password"
-                  placeholder="Enter admin password"
-                  required
-                  className="w-full h-12 px-5 rounded-3xl border-2 border-gray-200 focus:border-[#3D1A6E] focus:outline-none text-sm transition-colors"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full py-3.5 rounded-3xl text-white font-black transition-all hover:scale-105 hover:shadow-xl"
-                style={{ background: "linear-gradient(135deg, #3D1A6E, #E91E8C)" }}
-              >
-                Login
-              </button>
-            </form>
-            <p className="text-center text-xs text-gray-400 mt-4">
-              Default: <code className="font-mono bg-gray-100 px-2 py-0.5 rounded-lg">admin123</code>
-            </p>
+
+            <div className="text-center mt-6 text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>
+              <p>🔒 وصول آمن للمسؤول</p>
+            </div>
           </div>
         </body>
       </html>
@@ -83,10 +87,9 @@ export default async function AdminLayout({
   }
 
   return (
-    <html lang="en">
-      <body className="min-h-screen flex" style={{ background: "#F8F5FF" }}>
-        <AdminSidebar />
-        <main className="flex-1 min-h-screen">{children}</main>
+    <html lang="ar" dir="rtl">
+      <body>
+        <AdminLayoutClient>{children}</AdminLayoutClient>
       </body>
     </html>
   );

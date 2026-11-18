@@ -1,12 +1,18 @@
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductDetailClient } from "@/components/products/ProductDetailClient";
 import { Footer } from "@/components/layout/Footer";
-import { getProductById, MOCK_PRODUCTS } from "@/lib/mockData";
+import { getProductById, getAllProductIds } from "@/lib/data";
+
+export const dynamic = "force-dynamic";
 
 export async function generateStaticParams() {
-  return MOCK_PRODUCTS.map((p) => ({ id: p.id }));
+  // Falls back gracefully if DB is unavailable at build time
+  try {
+    const ids = await getAllProductIds();
+    return ids.map((id) => ({ id }));
+  } catch {
+    return [];
+  }
 }
 
 export default async function ProductDetailPage({
@@ -15,7 +21,7 @@ export default async function ProductDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
-  const product = getProductById(id);
+  const product = await getProductById(id);
 
   if (!product) notFound();
 

@@ -1,57 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createClient } from "@/utils/supabase/server";
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    const supabase = await createClient();
     const body = await request.json();
-
-    const category = await prisma.productCategory.update({
-      where: { id },
-      data: body,
-    });
-
-    return NextResponse.json({ category });
+    const { data, error } = await supabase.from("ProductCategory").update(body).eq("id", id).select().single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ category: data });
   } catch (error) {
-    console.error("Failed to update category:", error);
-    return NextResponse.json({ error: "Failed to update category" }, { status: 500 });
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-
-    // Check if category has products
-    const category = await prisma.productCategory.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: { products: true },
-        },
-      },
-    });
-
-    if (category && category._count.products > 0) {
-      return NextResponse.json(
-        { error: "Cannot delete category with products" },
-        { status: 400 }
-      );
-    }
-
-    await prisma.productCategory.delete({
-      where: { id },
-    });
-
+    const supabase = await createClient();
+    const { error } = await supabase.from("ProductCategory").delete().eq("id", id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete category:", error);
-    return NextResponse.json({ error: "Failed to delete category" }, { status: 500 });
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

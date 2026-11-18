@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, Edit2, Trash2, Eye, EyeOff, Calendar } from "lucide-react";
-import { PageHeader, Card, Button, Modal, Input, Textarea, Checkbox, Table, LoadingSpinner } from "@/components/admin/AdminComponents";
+import { createClient } from "@/utils/supabase/client";
+import { PageHeader, Button, Modal, Input, Checkbox, Table, LoadingSpinner } from "@/components/admin/AdminComponents";
 
 interface Banner {
   id: string;
@@ -16,50 +17,42 @@ interface Banner {
   endDate?: string;
 }
 
+const PLACEMENT_AR: Record<string, string> = {
+  hero: "الرئيسية",
+  sidebar: "الشريط الجانبي",
+  popup: "نافذة منبثقة",
+  category: "الفئة",
+};
+
 export default function BannersPage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
 
-  useEffect(() => {
-    fetchBanners();
+  const fetchBanners = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("Banner")
+      .select("*")
+      .order("displayOrder", { ascending: true });
+    setBanners(data ?? []);
+    setLoading(false);
   }, []);
 
-  async function fetchBanners() {
-    try {
-      const res = await fetch("/api/admin/banners");
-      const data = await res.json();
-      setBanners(data.banners || []);
-    } catch (error) {
-      console.error("Failed to fetch banners:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => { fetchBanners(); }, [fetchBanners]);
 
   async function handleToggleActive(id: string, isActive: boolean) {
-    try {
-      await fetch(`/api/admin/banners/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !isActive }),
-      });
-      fetchBanners();
-    } catch (error) {
-      console.error("Failed to toggle banner:", error);
-    }
+    const supabase = createClient();
+    await supabase.from("Banner").update({ isActive: !isActive }).eq("id", id);
+    fetchBanners();
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Are you sure you want to delete this banner?")) return;
-    
-    try {
-      await fetch(`/api/admin/banners/${id}`, { method: "DELETE" });
-      fetchBanners();
-    } catch (error) {
-      console.error("Failed to delete banner:", error);
-    }
+    if (!confirm("هل أنت متأكد من حذف هذا البانر؟")) return;
+    const supabase = createClient();
+    await supabase.from("Banner").delete().eq("id", id);
+    fetchBanners();
   }
 
   if (loading) return <LoadingSpinner />;
@@ -67,45 +60,50 @@ export default function BannersPage() {
   return (
     <div className="p-8">
       <PageHeader
-        title="Banners & Visual Assets"
-        description="Manage hero banners, promotional images, and visual content"
+        title="البانرات والوسائط البصرية"
+        description="إدارة بانرات الرئيسية والصور الترويجية"
         action={
           <Button onClick={() => { setEditingBanner(null); setShowModal(true); }}>
-            <div className="flex items-center gap-2">
-              <Plus size={20} />
-              Add Banner
-            </div>
+            <Plus size={20} />
+            إضافة بانر
           </Button>
         }
       />
 
       <Table
-        headers={["Image", "Title", "Placement", "Schedule", "Status", "Actions"]}
-        emptyMessage="No banners found. Add your first banner to get started."
+        headers={["الصورة", "العنوان", "الموضع", "الجدولة", "الحالة", "الإجراءات"]}
+        emptyMessage="لا توجد بانرات. أضف بانرك الأول للبدء."
       >
         {banners.map((banner) => (
           <tr key={banner.id} className="border-t border-gray-100">
             <td className="px-6 py-4">
-              <img src={banner.image || "/placeholder.jpg"} alt={banner.titleEn} className="w-20 h-12 object-cover rounded-lg" />
+              {banner.image ? (
+                <img src={banner.image} alt={banner.titleAr ?? "بانر"} className="w-20 h-12 object-cover rounded-lg" />
+              ) : (
+                <div className="w-20 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs">
+                  لا صورة
+                </div>
+              )}
             </td>
-            <td className="px-6 py-4">
-              <p className="font-semibold text-gray-900">{banner.titleEn}</p>
-              <p className="text-sm text-gray-500">{banner.titleAr}</p>
+            <td className="px-6 py-4 text-right">
+              <p className="font-semibold text-gray-900">{banner.titleAr}</p>
+              <p className="text-sm text-gray-500">{banner.titleEn}</p>
             </td>
-            <td className="px-6 py-4">
-              <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
-                {banner.placement}
+            <td className="px-6 py-4 text-right">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: "#E0F7FA", color: "#00838F" }}>
+                {PLACEMENT_AR[banner.placement] ?? banner.placement}
               </span>
             </td>
-            <td className="px-6 py-4 text-sm text-gray-600">
+            <td className="px-6 py-4 text-sm text-gray-600 text-right">
               {banner.startDate && banner.endDate ? (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 justify-end">
+                  <span>
+                    {new Date(banner.startDate).toLocaleDateString("ar-EG")} -{" "}
+                    {new Date(banner.endDate).toLocaleDateString("ar-EG")}
+                  </span>
                   <Calendar size={14} />
-                  {new Date(banner.startDate).toLocaleDateString()} - {new Date(banner.endDate).toLocaleDateString()}
                 </div>
-              ) : (
-                "Always active"
-              )}
+              ) : "نشط دائمًا"}
             </td>
             <td className="px-6 py-4">
               <button
@@ -115,7 +113,7 @@ export default function BannersPage() {
                 }`}
               >
                 {banner.isActive ? <Eye size={14} /> : <EyeOff size={14} />}
-                {banner.isActive ? "Active" : "Hidden"}
+                {banner.isActive ? "نشط" : "مخفي"}
               </button>
             </td>
             <td className="px-6 py-4">
@@ -143,66 +141,48 @@ export default function BannersPage() {
   );
 }
 
-function BannerModal({ banner, onClose, onSave }: { banner: Banner | null; onClose: () => void; onSave: () => void }) {
+function BannerModal({ banner, onClose, onSave }: { banner: Banner | null; onClose: () => void; onSave: () => void; }) {
   const [formData, setFormData] = useState({
-    titleEn: banner?.titleEn || "",
-    titleAr: banner?.titleAr || "",
-    descEn: "",
-    descAr: "",
-    image: banner?.image || "",
-    linkUrl: banner?.linkUrl || "",
-    placement: banner?.placement || "hero",
-    isActive: banner?.isActive ?? true,
-    startDate: banner?.startDate || "",
-    endDate: banner?.endDate || "",
+    titleAr: banner?.titleAr ?? "", titleEn: banner?.titleEn ?? "",
+    image: banner?.image ?? "", linkUrl: banner?.linkUrl ?? "",
+    placement: banner?.placement ?? "hero", isActive: banner?.isActive ?? true,
+    startDate: banner?.startDate ?? "", endDate: banner?.endDate ?? "",
   });
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-
     try {
-      const url = banner ? `/api/admin/banners/${banner.id}` : "/api/admin/banners";
-      const method = banner ? "PATCH" : "POST";
-
-      await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
+      const supabase = createClient();
+      if (banner) {
+        await supabase.from("Banner").update(formData).eq("id", banner.id);
+      } else {
+        await supabase.from("Banner").insert({ ...formData, displayOrder: 999 });
+      }
       onSave();
-    } catch (error) {
-      console.error("Failed to save banner:", error);
-      alert("Failed to save banner");
-    } finally {
-      setSaving(false);
-    }
+    } catch { alert("فشل في حفظ البانر"); }
+    finally { setSaving(false); }
   }
 
   return (
-    <Modal isOpen={true} onClose={onClose} title={banner ? "Edit Banner" : "Add New Banner"}>
+    <Modal isOpen={true} onClose={onClose} title={banner ? "تعديل البانر" : "إضافة بانر جديد"}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Title (English)" value={formData.titleEn} onChange={(val) => setFormData({ ...formData, titleEn: val })} />
-          <Input label="Title (Arabic)" value={formData.titleAr} onChange={(val) => setFormData({ ...formData, titleAr: val })} />
+          <Input label="العنوان (عربي)" value={formData.titleAr} onChange={(v) => setFormData({ ...formData, titleAr: v })} />
+          <Input label="العنوان (إنجليزي)" value={formData.titleEn} onChange={(v) => setFormData({ ...formData, titleEn: v })} />
         </div>
-
-        <Input label="Image URL" value={formData.image} onChange={(val) => setFormData({ ...formData, image: val })} required />
-        <Input label="Link URL" type="url" value={formData.linkUrl} onChange={(val) => setFormData({ ...formData, linkUrl: val })} />
-
+        <Input label="رابط الصورة" value={formData.image} onChange={(v) => setFormData({ ...formData, image: v })} required />
+        <Input label="رابط الوجهة" value={formData.linkUrl} onChange={(v) => setFormData({ ...formData, linkUrl: v })} />
         <div className="grid grid-cols-3 gap-4">
-          <Input label="Placement" value={formData.placement} onChange={(val) => setFormData({ ...formData, placement: val })} required />
-          <Input label="Start Date" type="date" value={formData.startDate} onChange={(val) => setFormData({ ...formData, startDate: val })} />
-          <Input label="End Date" type="date" value={formData.endDate} onChange={(val) => setFormData({ ...formData, endDate: val })} />
+          <Input label="الموضع" value={formData.placement} onChange={(v) => setFormData({ ...formData, placement: v })} required />
+          <Input label="تاريخ البدء" type="date" value={formData.startDate} onChange={(v) => setFormData({ ...formData, startDate: v })} />
+          <Input label="تاريخ الانتهاء" type="date" value={formData.endDate} onChange={(v) => setFormData({ ...formData, endDate: v })} />
         </div>
-
-        <Checkbox label="Active (visible on website)" checked={formData.isActive} onChange={(val) => setFormData({ ...formData, isActive: val })} />
-
+        <Checkbox label="نشط (مرئي على الموقع)" checked={formData.isActive} onChange={(v) => setFormData({ ...formData, isActive: v })} />
         <div className="flex gap-3 pt-4">
-          <Button type="button" onClick={onClose} variant="secondary" className="flex-1">Cancel</Button>
-          <Button type="submit" disabled={saving} className="flex-1">{saving ? "Saving..." : "Save Banner"}</Button>
+          <Button type="button" onClick={onClose} variant="secondary" className="flex-1">إلغاء</Button>
+          <Button type="submit" disabled={saving} className="flex-1">{saving ? "جارٍ الحفظ..." : "حفظ البانر"}</Button>
         </div>
       </form>
     </Modal>

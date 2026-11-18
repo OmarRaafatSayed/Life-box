@@ -1,5 +1,5 @@
-import type { PrismaClient } from '@prisma/client/extension'
+import { defineConfig } from 'prisma/config'
 
-export default {
-  url: process.env.DATABASE_URL,
-}
+export default defineConfig({
+  schema: './prisma/schema.prisma',
+})

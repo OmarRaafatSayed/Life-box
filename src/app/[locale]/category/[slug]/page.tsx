@@ -1,12 +1,14 @@
-import { getProductsByCategory } from "@/lib/mockData";
 import { ProductCard } from "@/components/products/ProductCard";
 import { Footer } from "@/components/layout/Footer";
+import { getProductsByCategory } from "@/lib/data";
+
+export const dynamic = "force-dynamic";
 
 const META: Record<string, { labelEn: string; labelAr: string; color: string; bg: string }> = {
-  "home-utilities":   { labelEn: "Home Utilities",   labelAr: "أدوات المنزل",          color: "#3D1A6E", bg: "#F5F0FF" },
-  "housewares":       { labelEn: "Housewares",        labelAr: "أواني المنزل",          color: "#E91E8C", bg: "#FFF0F8" },
-  "home-textiles":    { labelEn: "Home Textiles",     labelAr: "المنسوجات المنزلية",    color: "#00BCD4", bg: "#F0FCFF" },
-  "decorative-items": { labelEn: "Decorative Items",  labelAr: "الديكورات",             color: "#FF6B35", bg: "#FFF5F0" },
+  "home-utilities":   { labelEn: "Home Utilities",  labelAr: "أدوات المنزل",       color: "#3D1A6E", bg: "#F5F0FF" },
+  "housewares":       { labelEn: "Housewares",       labelAr: "أواني المنزل",       color: "#E91E8C", bg: "#FFF0F8" },
+  "home-textiles":    { labelEn: "Home Textiles",    labelAr: "المنسوجات المنزلية", color: "#00BCD4", bg: "#F0FCFF" },
+  "decorative-items": { labelEn: "Decorative Items", labelAr: "الديكورات",          color: "#FF6B35", bg: "#FFF5F0" },
 };
 
 export default async function CategoryPage({
@@ -17,14 +19,18 @@ export default async function CategoryPage({
   const { locale, slug } = await params;
   const isAr = locale === "ar";
   const meta = META[slug] ?? { labelEn: slug, labelAr: slug, color: "#3D1A6E", bg: "#F5F0FF" };
-  const products = getProductsByCategory(slug);
+
+  const products = await getProductsByCategory(slug);
 
   return (
     <main>
       {/* Banner */}
       <div
         className="py-14 px-4 sm:px-6 lg:px-8"
-        style={{ background: `linear-gradient(135deg, ${meta.bg} 0%, white 100%)`, borderBottom: `4px solid ${meta.color}22` }}
+        style={{
+          background: `linear-gradient(135deg, ${meta.bg} 0%, white 100%)`,
+          borderBottom: `4px solid ${meta.color}22`,
+        }}
       >
         <div className="max-w-7xl mx-auto">
           <div
@@ -48,11 +54,17 @@ export default async function CategoryPage({
 
       {/* Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-          {products.map((p) => (
-            <ProductCard key={p.id} product={p} locale={locale} />
-          ))}
-        </div>
+        {products.length === 0 ? (
+          <div className="text-center py-20 text-gray-400">
+            <p className="text-xl font-bold">{isAr ? "لا توجد منتجات في هذه الفئة" : "No products in this category"}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+            {products.map((p) => (
+              <ProductCard key={p.id} product={p} locale={locale} />
+            ))}
+          </div>
+        )}
       </div>
 
       <Footer />

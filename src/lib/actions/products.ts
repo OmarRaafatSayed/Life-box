@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
-import type { Product, ProductFilters, ProductFormData, Category } from '@/types'
+import type { Product, ProductFilters, ProductFormData } from '@/types'
 
 // Map Prisma Decimal fields and Date fields to plain JS types
 function mapProduct(p: any): Product {
@@ -10,20 +10,17 @@ function mapProduct(p: any): Product {
     ...p,
     price: Number(p.price),
     rating: Number(p.rating),
+    // Expose categoryId as the legacy "category" string for type compatibility
+    category: p.category?.slug?.toUpperCase().replace(/-/g, '_') ?? p.categoryId ?? 'HOME_UTILITIES',
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   } as Product
 }
 
-// Map URL slug to Category enum value
-function slugToCategory(slug: string): string {
-  const map: Record<string, string> = {
-    'home-utilities': 'HOME_UTILITIES',
-    'housewares': 'HOUSEWARES',
-    'home-textiles': 'HOME_TEXTILES',
-    'decorative-items': 'DECORATIVE_ITEMS',
-  }
-  return map[slug] ?? slug.toUpperCase().replace(/-/g, '_')
+// Map URL slug to a ProductCategory slug for Prisma query
+function slugToCategorySlug(slug: string): string {
+  // Accept both formats: 'home-utilities' and 'HOME_UTILITIES'
+  return slug.toLowerCase().replace(/_/g, '-')
 }
 
 // Build a Prisma where clause from ProductFilters
@@ -82,7 +79,11 @@ export async function getProducts(filters?: ProductFilters): Promise<Product[]> 
     const where = buildWhereFromFilters(filters)
     const orderBy = buildOrderBy(filters?.sort)
 
-    const products = await prisma.product.findMany({ where, orderBy })
+    const products = await prisma.product.findMany({
+      where,
+      orderBy,
+      include: { category: { select: { nameAr: true, nameEn: true, slug: true } } },
+    })
     return products.map(mapProduct)
   } catch (error) {
     throw new Error(
@@ -93,7 +94,10 @@ export async function getProducts(filters?: ProductFilters): Promise<Product[]> 
 
 export async function getProductById(id: string): Promise<Product | null> {
   try {
-    const product = await prisma.product.findUnique({ where: { id } })
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: { category: { select: { nameAr: true, nameEn: true, slug: true } } },
+    })
     return product ? mapProduct(product) : null
   } catch (error) {
     throw new Error(
@@ -107,14 +111,18 @@ export async function getProductsByCategory(
   filters?: ProductFilters
 ): Promise<Product[]> {
   try {
-    const categoryEnum = slugToCategory(category)
+    const slug = slugToCategorySlug(category)
     const where = {
       ...buildWhereFromFilters(filters),
-      category: categoryEnum,
+      category: { slug },
     }
     const orderBy = buildOrderBy(filters?.sort)
 
-    const products = await prisma.product.findMany({ where, orderBy })
+    const products = await prisma.product.findMany({
+      where,
+      orderBy,
+      include: { category: { select: { nameAr: true, nameEn: true, slug: true } } },
+    })
     return products.map(mapProduct)
   } catch (error) {
     throw new Error(
@@ -129,6 +137,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
       where: { featured: true },
       orderBy: { reviewCount: 'desc' },
       take: 8,
+      include: { category: { select: { nameAr: true, nameEn: true, slug: true } } },
     })
     return products.map(mapProduct)
   } catch (error) {
@@ -148,6 +157,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
         ],
       },
       take: 20,
+      include: { category: { select: { nameAr: true, nameEn: true, slug: true } } },
     })
     return products.map(mapProduct)
   } catch (error) {
@@ -159,6 +169,13 @@ export async function searchProducts(query: string): Promise<Product[]> {
 
 export async function createProduct(data: ProductFormData): Promise<Product> {
   try {
+    // Find the category by slug derived from the category string
+    const categorySlug = slugToCategorySlug(data.category)
+    const categoryRecord = await prisma.productCategory.findFirst({
+      where: { slug: categorySlug },
+    })
+    if (!categoryRecord) throw new Error(`Category not found: ${data.category}`)
+
     const product = await prisma.product.create({
       data: {
         nameEn: data.nameEn,
@@ -166,15 +183,15 @@ export async function createProduct(data: ProductFormData): Promise<Product> {
         descEn: data.descEn,
         descAr: data.descAr,
         price: data.price,
-        category: data.category,
+        categoryId: categoryRecord.id,
         images: data.images,
         colors: data.colors,
         sizes: data.sizes,
         stock: data.stock,
         featured: data.featured,
-        // Generate a SKU from timestamp + random suffix if not provided
         sku: `SKU-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
       },
+      include: { category: { select: { nameAr: true, nameEn: true, slug: true } } },
     })
     revalidatePath('/admin/products')
     return mapProduct(product)
@@ -190,6 +207,13 @@ export async function updateProduct(
   data: Partial<ProductFormData>
 ): Promise<Product> {
   try {
+    let categoryId: string | undefined
+    if (data.category) {
+      const slug = slugToCategorySlug(data.category)
+      const categoryRecord = await prisma.productCategory.findFirst({ where: { slug } })
+      if (categoryRecord) categoryId = categoryRecord.id
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data: {
@@ -198,13 +222,14 @@ export async function updateProduct(
         ...(data.descEn !== undefined && { descEn: data.descEn }),
         ...(data.descAr !== undefined && { descAr: data.descAr }),
         ...(data.price !== undefined && { price: data.price }),
-        ...(data.category !== undefined && { category: data.category }),
+        ...(categoryId !== undefined && { categoryId }),
         ...(data.images !== undefined && { images: data.images }),
         ...(data.colors !== undefined && { colors: data.colors }),
         ...(data.sizes !== undefined && { sizes: data.sizes }),
         ...(data.stock !== undefined && { stock: data.stock }),
         ...(data.featured !== undefined && { featured: data.featured }),
       },
+      include: { category: { select: { nameAr: true, nameEn: true, slug: true } } },
     })
     revalidatePath('/admin/products')
     revalidatePath(`/products/${id}`)

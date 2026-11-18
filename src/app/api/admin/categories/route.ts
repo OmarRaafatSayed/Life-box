@@ -1,60 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createClient } from "@/utils/supabase/server";
 
 export async function GET() {
   try {
-    const categories = await prisma.productCategory.findMany({
-      orderBy: { displayOrder: "asc" },
-      include: {
-        _count: {
-          select: { products: true },
-        },
-      },
+    const supabase = await createClient();
+    const { data: cats, error } = await supabase
+      .from("ProductCategory")
+      .select("id, nameEn, nameAr, slug, isActive, displayOrder")
+      .order("displayOrder", { ascending: true });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    const { data: productCounts } = await supabase.from("Product").select("categoryId");
+    const countMap = new Map<string, number>();
+    (productCounts ?? []).forEach((p) => {
+      countMap.set(p.categoryId, (countMap.get(p.categoryId) ?? 0) + 1);
     });
 
     return NextResponse.json({
-      categories: categories.map((cat) => ({
-        ...cat,
-        productCount: cat._count.products,
-      })),
+      categories: (cats ?? []).map((c) => ({ ...c, productCount: countMap.get(c.id) ?? 0 })),
     });
   } catch (error) {
-    console.error("Failed to fetch categories:", error);
-    return NextResponse.json({ error: "Failed to fetch categories" }, { status: 500 });
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
-    const { nameEn, nameAr, slug, descEn, descAr, isActive, image, icon, parentId } = body;
-
-    // Get the highest display order
-    const maxOrder = await prisma.productCategory.findMany({
-      orderBy: { displayOrder: "desc" },
-      take: 1,
-    });
-
-    const displayOrder = maxOrder.length > 0 ? maxOrder[0].displayOrder + 1 : 0;
-
-    const category = await prisma.productCategory.create({
-      data: {
-        nameEn,
-        nameAr,
-        slug,
-        descEn,
-        descAr,
-        isActive: isActive ?? true,
-        displayOrder,
-        image,
-        icon,
-        parentId,
-      },
-    });
-
-    return NextResponse.json({ category }, { status: 201 });
+    const { data, error } = await supabase
+      .from("ProductCategory")
+      .insert({ ...body, displayOrder: 999 })
+      .select()
+      .single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ category: data }, { status: 201 });
   } catch (error) {
-    console.error("Failed to create category:", error);
-    return NextResponse.json({ error: "Failed to create category" }, { status: 500 });
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, Eye, EyeOff, Megaphone } from "lucide-react";
-import { PageHeader, Card, Button, Modal, Input, Textarea, Checkbox, Table, LoadingSpinner, Select } from "@/components/admin/AdminComponents";
+import { useState, useEffect, useCallback } from "react";
+import { Plus, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { PageHeader, Button, Modal, Input, Textarea, Checkbox, Table, LoadingSpinner, Select } from "@/components/admin/AdminComponents";
 
 interface MarketingContent {
   id: string;
@@ -16,50 +17,41 @@ interface MarketingContent {
   endDate?: string;
 }
 
+const TYPE_AR: Record<string, string> = {
+  popup: "نافذة منبثقة",
+  discount_banner: "بانر خصم",
+  announcement: "إعلان",
+};
+
 export default function MarketingPage() {
   const [contents, setContents] = useState<MarketingContent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingContent, setEditingContent] = useState<MarketingContent | null>(null);
 
-  useEffect(() => {
-    fetchContents();
+  const fetchContents = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("MarketingContent")
+      .select("*")
+      .order("createdAt", { ascending: false });
+    setContents(data ?? []);
+    setLoading(false);
   }, []);
 
-  async function fetchContents() {
-    try {
-      const res = await fetch("/api/admin/marketing");
-      const data = await res.json();
-      setContents(data.contents || []);
-    } catch (error) {
-      console.error("Failed to fetch marketing content:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => { fetchContents(); }, [fetchContents]);
 
   async function handleToggleActive(id: string, isActive: boolean) {
-    try {
-      await fetch(`/api/admin/marketing/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !isActive }),
-      });
-      fetchContents();
-    } catch (error) {
-      console.error("Failed to toggle content:", error);
-    }
+    const supabase = createClient();
+    await supabase.from("MarketingContent").update({ isActive: !isActive }).eq("id", id);
+    fetchContents();
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Are you sure you want to delete this content?")) return;
-    
-    try {
-      await fetch(`/api/admin/marketing/${id}`, { method: "DELETE" });
-      fetchContents();
-    } catch (error) {
-      console.error("Failed to delete content:", error);
-    }
+    if (!confirm("هل أنت متأكد من حذف هذا المحتوى؟")) return;
+    const supabase = createClient();
+    await supabase.from("MarketingContent").delete().eq("id", id);
+    fetchContents();
   }
 
   if (loading) return <LoadingSpinner />;
@@ -67,52 +59,43 @@ export default function MarketingPage() {
   return (
     <div className="p-8">
       <PageHeader
-        title="Marketing & Content Hub"
-        description="Manage promotional popups, discount banners, and marketing campaigns"
+        title="التسويق ومركز المحتوى"
+        description="إدارة النوافذ المنبثقة وبانرات الخصم والحملات التسويقية"
         action={
           <Button onClick={() => { setEditingContent(null); setShowModal(true); }}>
-            <div className="flex items-center gap-2">
-              <Plus size={20} />
-              Add Content
-            </div>
+            <Plus size={20} />
+            إضافة محتوى
           </Button>
         }
       />
 
       <Table
-        headers={["Type", "Title", "Schedule", "Status", "Actions"]}
-        emptyMessage="No marketing content found. Create your first campaign to get started."
+        headers={["النوع", "العنوان", "الجدولة", "الحالة", "الإجراءات"]}
+        emptyMessage="لا يوجد محتوى تسويقي. أنشئ حملتك الأولى للبدء."
       >
         {contents.map((content) => (
           <tr key={content.id} className="border-t border-gray-100">
-            <td className="px-6 py-4">
-              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
-                {content.type}
+            <td className="px-6 py-4 text-right">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: "#F5F0FF", color: "#3D1A6E" }}>
+                {TYPE_AR[content.type] ?? content.type}
               </span>
             </td>
-            <td className="px-6 py-4">
-              <p className="font-semibold text-gray-900">{content.titleEn}</p>
-              <p className="text-sm text-gray-500">{content.titleAr}</p>
+            <td className="px-6 py-4 text-right">
+              <p className="font-semibold text-gray-900">{content.titleAr}</p>
+              <p className="text-sm text-gray-500">{content.titleEn}</p>
             </td>
-            <td className="px-6 py-4 text-sm text-gray-600">
-              {content.startDate && content.endDate ? (
-                <div>
-                  {new Date(content.startDate).toLocaleDateString()} -<br />
-                  {new Date(content.endDate).toLocaleDateString()}
-                </div>
-              ) : (
-                "Always active"
-              )}
+            <td className="px-6 py-4 text-sm text-gray-600 text-right">
+              {content.startDate && content.endDate
+                ? `${new Date(content.startDate).toLocaleDateString("ar-EG")} - ${new Date(content.endDate).toLocaleDateString("ar-EG")}`
+                : "نشط دائمًا"}
             </td>
             <td className="px-6 py-4">
               <button
                 onClick={() => handleToggleActive(content.id, content.isActive)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                  content.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
-                }`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${content.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
               >
                 {content.isActive ? <Eye size={14} /> : <EyeOff size={14} />}
-                {content.isActive ? "Active" : "Hidden"}
+                {content.isActive ? "نشط" : "مخفي"}
               </button>
             </td>
             <td className="px-6 py-4">
@@ -140,77 +123,57 @@ export default function MarketingPage() {
   );
 }
 
-function MarketingModal({ content, onClose, onSave }: { content: MarketingContent | null; onClose: () => void; onSave: () => void }) {
+function MarketingModal({ content, onClose, onSave }: { content: MarketingContent | null; onClose: () => void; onSave: () => void; }) {
   const [formData, setFormData] = useState({
-    type: content?.type || "popup",
-    titleEn: content?.titleEn || "",
-    titleAr: content?.titleAr || "",
-    contentEn: content?.contentEn || "",
-    contentAr: content?.contentAr || "",
+    type: content?.type ?? "popup",
+    titleAr: content?.titleAr ?? "", titleEn: content?.titleEn ?? "",
+    contentAr: content?.contentAr ?? "", contentEn: content?.contentEn ?? "",
     isActive: content?.isActive ?? true,
-    startDate: content?.startDate || "",
-    endDate: content?.endDate || "",
+    startDate: content?.startDate ?? "", endDate: content?.endDate ?? "",
   });
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-
     try {
-      const url = content ? `/api/admin/marketing/${content.id}` : "/api/admin/marketing";
-      const method = content ? "PATCH" : "POST";
-
-      await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
+      const supabase = createClient();
+      if (content) {
+        await supabase.from("MarketingContent").update(formData).eq("id", content.id);
+      } else {
+        await supabase.from("MarketingContent").insert(formData);
+      }
       onSave();
-    } catch (error) {
-      console.error("Failed to save content:", error);
-      alert("Failed to save content");
-    } finally {
-      setSaving(false);
-    }
+    } catch { alert("فشل في حفظ المحتوى"); }
+    finally { setSaving(false); }
   }
 
   return (
-    <Modal isOpen={true} onClose={onClose} title={content ? "Edit Marketing Content" : "Add New Marketing Content"}>
+    <Modal isOpen={true} onClose={onClose} title={content ? "تعديل المحتوى التسويقي" : "إضافة محتوى تسويقي"}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Select
-          label="Content Type"
-          value={formData.type}
-          onChange={(val) => setFormData({ ...formData, type: val })}
+        <Select label="نوع المحتوى" value={formData.type} onChange={(v) => setFormData({ ...formData, type: v })}
           options={[
-            { value: "popup", label: "Popup" },
-            { value: "discount_banner", label: "Discount Banner" },
-            { value: "announcement", label: "Announcement" },
-          ]}
-          required
+            { value: "popup", label: "نافذة منبثقة" },
+            { value: "discount_banner", label: "بانر خصم" },
+            { value: "announcement", label: "إعلان" },
+          ]} required
         />
-
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Title (English)" value={formData.titleEn} onChange={(val) => setFormData({ ...formData, titleEn: val })} />
-          <Input label="Title (Arabic)" value={formData.titleAr} onChange={(val) => setFormData({ ...formData, titleAr: val })} />
+          <Input label="العنوان (عربي)" value={formData.titleAr} onChange={(v) => setFormData({ ...formData, titleAr: v })} />
+          <Input label="العنوان (إنجليزي)" value={formData.titleEn} onChange={(v) => setFormData({ ...formData, titleEn: v })} />
         </div>
-
         <div className="grid grid-cols-2 gap-4">
-          <Textarea label="Content (English)" value={formData.contentEn} onChange={(val) => setFormData({ ...formData, contentEn: val })} rows={4} />
-          <Textarea label="Content (Arabic)" value={formData.contentAr} onChange={(val) => setFormData({ ...formData, contentAr: val })} rows={4} />
+          <Textarea label="المحتوى (عربي)" value={formData.contentAr} onChange={(v) => setFormData({ ...formData, contentAr: v })} rows={4} />
+          <Textarea label="المحتوى (إنجليزي)" value={formData.contentEn} onChange={(v) => setFormData({ ...formData, contentEn: v })} rows={4} />
         </div>
-
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Start Date" type="date" value={formData.startDate} onChange={(val) => setFormData({ ...formData, startDate: val })} />
-          <Input label="End Date" type="date" value={formData.endDate} onChange={(val) => setFormData({ ...formData, endDate: val })} />
+          <Input label="تاريخ البدء" type="date" value={formData.startDate} onChange={(v) => setFormData({ ...formData, startDate: v })} />
+          <Input label="تاريخ الانتهاء" type="date" value={formData.endDate} onChange={(v) => setFormData({ ...formData, endDate: v })} />
         </div>
-
-        <Checkbox label="Active (visible on website)" checked={formData.isActive} onChange={(val) => setFormData({ ...formData, isActive: val })} />
-
+        <Checkbox label="نشط (مرئي على الموقع)" checked={formData.isActive} onChange={(v) => setFormData({ ...formData, isActive: v })} />
         <div className="flex gap-3 pt-4">
-          <Button type="button" onClick={onClose} variant="secondary" className="flex-1">Cancel</Button>
-          <Button type="submit" disabled={saving} className="flex-1">{saving ? "Saving..." : "Save Content"}</Button>
+          <Button type="button" onClick={onClose} variant="secondary" className="flex-1">إلغاء</Button>
+          <Button type="submit" disabled={saving} className="flex-1">{saving ? "جارٍ الحفظ..." : "حفظ المحتوى"}</Button>
         </div>
       </form>
     </Modal>
